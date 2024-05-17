@@ -1,17 +1,19 @@
 import torch
 import torch.nn as nn
 
-""" This file contains the LSTM model"""
+"""This file contains the implementation of an LSTM model."""
 
 class LSTM(nn.Module):
     def __init__(self, num_layers, input_size, hidden_size, device=None, dropout_prob=0.2):
         """
-        Inputs:
-        num_layers: Number of recurrent layers
-        input_size: Number of features for input
-        hidden_size: Number of features in hidden state
+        Initialize the LSTM model.
 
-        Outputs: 1
+        Parameters:
+        num_layers (int): Number of recurrent layers.
+        input_size (int): Number of features for the input.
+        hidden_size (int): Number of features in the hidden state.
+        device (torch.device, optional): Device to run the model on (CPU or CUDA). Defaults to CPU if not specified.
+        dropout_prob (float, optional): Dropout probability for regularization. Defaults to 0.2.
         """
         super(LSTM, self).__init__()
 
@@ -39,22 +41,26 @@ class LSTM(nn.Module):
         )
 
     def forward(self, x):
-      '''
-      Inputs:
-      x: input data
+      """
+      Forward pass of the LSTM model.
 
-      Outputs:
-      out: output of forward pass
-      '''
-      # Normalizing
+      Parameters:
+      x (torch.Tensor): Input data tensor.
+
+      Returns:
+      torch.Tensor: Output of the forward pass.
+      """
+      # Initialize hidden and cell states
       h = torch.zeros(1, x.size(0), self.hidden_size).to(self.device)
       c = torch.zeros(1, x.size(0), self.hidden_size).to(self.device)
 
+      # Take the output of the last time step
       out = x
       for i in range(self.num_layers):
         out, (h, c) = self.lstm_layers[i](out, (h, c))
         out = self.dropout_layers[i](out)
 
+      # Pass through the dense layers
       out = out[:, -1, :]
       x = self.dense(out)
 

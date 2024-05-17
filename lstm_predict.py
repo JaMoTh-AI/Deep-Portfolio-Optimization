@@ -11,44 +11,71 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 
 
-""" While there are 3 functions in this file, the main one is predict which takes
-    a start date and a timestep and predicts using the LSTM models we have trained.
-    It makes predictions on all stocks with LSTM available"""
+"""
+    This file contains functions for evaluating and predicting stock prices using pre-trained LSTM models.
+    The main function is `predict`, which takes a start date and a timestep and makes predictions using the LSTM models.
+    It makes predictions on all stocks with available LSTM models.
+"""
 
-# The validation loop given a criterion and dataloader
 def val_on_stock(model, val_dataloader, criterion, device):
-  # Get val loss
-  val_running_loss = 0
-  tot = 0
+    """
+    Evaluate the model on validation data.
 
-  model.eval()
-  with torch.no_grad():
-    for i, (X,y) in enumerate(val_dataloader):
-        labels = y.view(-1, 1).to(device)
-        inputs = X.to(device)
+    Parameters:
+    model (nn.Module): The LSTM model to evaluate.
+    val_dataloader (DataLoader): DataLoader for the validation dataset.
+    criterion (nn.Module): Loss function.
+    device (torch.device): Device to run the evaluation on.
 
-        outputs = model(inputs) # Forward path
+    Returns:
+    float: The average validation loss.
+    """
+    val_running_loss = 0
+    tot = 0
 
-        loss = criterion(outputs, labels) # loss function applied
+    model.eval()
+    with torch.no_grad():
+        for i, (X,y) in enumerate(val_dataloader):
+            labels = y.view(-1, 1).to(device)
+            inputs = X.to(device)
 
-        val_running_loss += loss.item()
-        tot += 1
+            outputs = model(inputs) # Forward path
 
-  return val_running_loss/tot
+            loss = criterion(outputs, labels) # loss function applied
+
+            val_running_loss += loss.item()
+            tot += 1
+
+    return val_running_loss/tot
 
 def evaluate(ticker, dataloader, dataset, model_dir, start_date, device, num_layers, input_size, hidden_size):
-    # Get path to model first
+    """
+    Evaluate a specific stock model and make a prediction.
+
+    Parameters:
+    ticker (str): Stock ticker symbol.
+    dataloader (DataLoader): DataLoader for the dataset.
+    dataset (Dataset): The dataset object.
+    model_dir (str): Directory where the model weights are stored.
+    start_date (str): Start date for the evaluation.
+    device (torch.device): Device to run the evaluation on.
+    num_layers (int): Number of LSTM layers.
+    input_size (int): Input size for the LSTM model.
+    hidden_size (int): Hidden size for the LSTM model.
+
+    Returns:
+    dict: Dictionary containing the variance and prediction.
+    """
+    # Load the model for the specified ticker
     path_to_model = os.path.join(model_dir, ticker +".pt")
-    
-    # Load the model for the ticker
     model = LSTM(num_layers, input_size, hidden_size, device).to(device)
     state_dict = torch.load(path_to_model, map_location=device)
     model.load_state_dict(state_dict)
 
-    # Get the variance 
+    # Calculate the validation loss
     ticker_variance = val_on_stock(model, dataloader, nn.MSELoss(), device)
 
-    # Get the prediction one away
+    # Make a prediction for the specified start date
     X = dataset.get_X_from_date(start_date).to(device)
     ticker_pred = model(X).item()
 
@@ -56,12 +83,16 @@ def evaluate(ticker, dataloader, dataset, model_dir, start_date, device, num_lay
 
 def predict(timestep, start_date):
     """
-    Inputs:
-        timestep: d, w, m, y for day, week, month and year
-              - note that the year predictor performs very poorely
-        start_date: a string that needs to be in the form of 'yyyy-mm-dd hh:mm:00-05:00'
-        when timestep input is d. It needs to be in 'yyyy-mm-dd' when timestep 
-        input is anything else.
+    Predict stock prices using pre-trained LSTM models.
+
+    Parameters:
+    timestep (str): Time step for prediction ('d' for day, 'w' for week, 'm' for month, 'y' for year).
+    start_date (str): Start date in the format 'yyyy-mm-dd hh:mm:00-05:00' for daily predictions,
+                      or 'yyyy-mm-dd' for other time steps. Make sure that the date/time is present in the 
+                      stock data
+
+    Returns:
+    dict: Dictionary containing predictions and variances for each stock.
     """
     # Hyperparams we used to train the model
     num_layers, input_size, hidden_size = 4, 17, 100
