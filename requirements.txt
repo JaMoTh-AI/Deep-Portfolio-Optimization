@@ -1,0 +1,9 @@
+yfinance
+ta
+scikit-learn
+torch
+numpy
+pandas
+tqdm
+streamlit
+cvxpy

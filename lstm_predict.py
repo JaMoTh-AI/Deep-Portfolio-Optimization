@@ -48,6 +48,28 @@ def val_on_stock(model, val_dataloader, criterion, device):
 
     return val_running_loss/tot
 
+def find_closest_date_index(target_date, df):
+    """
+    Finds the index in the DataFrame that's closest to the given date string.
+
+    Parameters:
+    date_str (str): The date string to compare, e.g., '2023-01-01'.
+    df (pd.DataFrame): The DataFrame with DatetimeIndex.
+
+    Returns:
+    closest_index: The index in the DataFrame that's closest to the given date.
+    """
+    # Convert the date string to a datetime object
+    target_date = target_date.tz_convert('America/New_York')
+
+    # Calculate the absolute difference between the target date and each index
+    time_diffs = (df.index - target_date).map(abs)
+
+    # Find the index with the minimum difference
+    closest_index = time_diffs.argmin()
+
+    return closest_index
+
 def evaluate(ticker, dataloader, dataset, model_dir, start_date, device, num_layers, input_size, hidden_size):
     """
     Evaluate a specific stock model and make a prediction.
@@ -110,7 +132,7 @@ def predict(timestep, start_date):
         interval = "1h"
         
         stock_end_date = start_date + timedelta(days=1)
-        stock_start_date = start_date - relativedelta(years=2) + relativedelta(months=5)
+        stock_start_date = start_date - relativedelta(years=1)
         
         end = str(stock_end_date.date())
         start = str(stock_start_date.date())
@@ -182,20 +204,23 @@ def predict(timestep, start_date):
     for ticker, df in tqdm(full_stock_data.items(), desc="Predicting"):
         try:
             df = (df-means[ticker])/std_devs[ticker] # Normalize
+            
+            # Find date in df as close as possible to start_date
+            stock_start_date = df.index[find_closest_date_index(start_date, df)]
 
             # Create dataset
             dataset = ValTimeSeriesDataset(ticker, df, n_lags, forecast_horizon)
             dataloader = DataLoader(dataset, batch_size=20, shuffle=False)
 
-            ticker_stats = evaluate(ticker, dataloader, dataset, model_dir, start_date, device, num_layers, input_size, hidden_size)
+            ticker_stats = evaluate(ticker, dataloader, dataset, model_dir, stock_start_date, device, num_layers, input_size, hidden_size)
             
             # Denormalize and get percentage change
-            init_price = df.loc[start_date]['Close']*std_devs[ticker]['Close']+means[ticker]['Close']
+            init_price = df.loc[stock_start_date]['Close']*std_devs[ticker]['Close']+means[ticker]['Close']
             pred_price = ticker_stats['pred']*std_devs[ticker]['Close']+means[ticker]['Close']
             
             ticker_stats['pred'] = pred_price/init_price
             output[ticker] = ticker_stats
-        except:
+        except Exception as e:
             print(f"Failed to predict {ticker}")
 
     # Return all predictions and variances
