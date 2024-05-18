@@ -61,10 +61,14 @@ def find_closest_date_index(target_date, df):
     closest_index: The index in the DataFrame that's closest to the given date.
     """
     # Convert the date string to a datetime object
-    if target_date.tzinfo is None:
-        target_date = target_date.tz_localize('America/New_York')
+    if df.index.name=="Datetime":
+        if target_date.tzinfo is None:
+            target_date = target_date.tz_localize('America/New_York')
+        else:
+            target_date = target_date.tz_convert('America/New_York')
     else:
-        target_date = target_date.tz_convert('America/New_York')
+        target_date = target_date.tz_localize(None)
+
 
     # Calculate the absolute difference between the target date and each index
     time_diffs = (df.index - target_date).map(abs)
@@ -230,9 +234,10 @@ def predict(timestep, start_date):
             ticker_stats['prices'] = init_price
             ticker_stats['sector'] = stock_sectors[ticker]
             ticker_stats['divident yield'] = stock_dividend_yields[ticker]/init_price
-            
+
             output[ticker] = ticker_stats
         except Exception as e:
+            print(e)
             print(f"Failed to predict {ticker}")
 
     # Return all predictions and variances
