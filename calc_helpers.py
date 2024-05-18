@@ -1,3 +1,5 @@
+import pandas as pd
+
 def risk_func(tkrs, df, start_date, end_date=None):
     """
     Given a list of tickers, return a dictionary matching 
@@ -59,7 +61,7 @@ def expected_returns(tkrs, df, time_period_start, time_period_end=None):
     return expected_return_dict
 
 
-def sectors(tkrs, df, start_date, end_date=None):
+def sectors(tkrs):
     """
     Given a list of tickers, return a dictionary matching the tickers to the sector that they belong to. 
     
@@ -71,22 +73,12 @@ def sectors(tkrs, df, start_date, end_date=None):
     sectors: Dictionary of sectors to the tickers that belong to that sector
     """
     
-    if end_date is None:
-        end_date = df.index[-1]
+    all_tickers = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
 
-    time_period = df.index[(df.index >= start_date) & (df.index <= end_date)]
-
-    sectors = {}
-    for t in tkrs:
-
-        t_sector = df[df['Symbol'] == t]['GICS Sector'][time_period].values[0]
-        
-        if t_sector not in sectors:
-            sectors[t_sector] = [t]
-        else:
-            sectors[t_sector].append(t)
-
-    return sectors
+    output = all_tickers[all_tickers['Symbol'].isin(tkrs)][['Symbol', 'GICS Sector']]
+    output = output.set_index('Symbol')['GICS Sector'].to_dict()
+    
+    return output
 
 
 def prices(tkrs, df, start_date, end_date=None):
