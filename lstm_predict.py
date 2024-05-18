@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from calc_helpers import sectors, dividend_yield
 
 
 """
@@ -201,6 +202,10 @@ def predict(timestep, start_date):
     full_stock_data = pull_stock_indicators(full_stock_data)
     full_stock_data = cleaning_data(full_stock_data)
 
+    # Get the divident yeilds and the sectors
+    stock_sectors = sectors(tickers)
+    stock_dividend_yields = dividend_yield(tickers, start_date)
+
     output = {}
 
     # Iterate through all tickers and obtain predictions as well as variance
@@ -223,6 +228,9 @@ def predict(timestep, start_date):
             
             ticker_stats['pred'] = pred_price/init_price
             ticker_stats['prices'] = init_price
+            ticker_stats['sector'] = stock_sectors[ticker]
+            ticker_stats['divident yield'] = stock_dividend_yields[ticker]/init_price
+            
             output[ticker] = ticker_stats
         except Exception as e:
             print(f"Failed to predict {ticker}")

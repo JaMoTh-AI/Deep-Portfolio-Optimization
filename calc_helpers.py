@@ -1,4 +1,5 @@
 import pandas as pd
+import yfinance as yf
 
 def sectors(tkrs):
     """
@@ -12,14 +13,18 @@ def sectors(tkrs):
     sectors: Dictionary of sectors to the tickers that belong to that sector
     """
     
-    all_tickers = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
-
-    output = all_tickers[all_tickers['Symbol'].isin(tkrs)][['Symbol', 'GICS Sector']]
-    output = output.set_index('Symbol')['GICS Sector'].to_dict()
+    output = {}
+    for ticker in tkrs:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        if 'sector' in info:
+            output[ticker] = info['sector']
+        else:
+            output[ticker] = ""
     
     return output
 
-def dividend_yield(tkrs, df, start_date, end_date=None):
+def dividend_yield(tkrs, date):
     """
     Given a list of tickers, return a dictionary matching the tickers 
     to their dividend yield as a percentage of price. 
@@ -27,27 +32,36 @@ def dividend_yield(tkrs, df, start_date, end_date=None):
     
     Inputs:
     tkrs: List of tickers
-    df: DataFrame of stock data
+    date: input strings
 
     Outputs:
     dividend_yield: Dictionary of tickers to their dividend yield
     """
+    if date.tzinfo is None:
+        date = date.tz_localize('America/New_York')
+    else:
+        date = date.tz_convert('America/New_York')
+    dividend_yields = {}
 
-    if end_date is None:
-        end_date = df.index[-1]
+    for ticker in tkrs:
 
-    time_period = df.index[(df.index >= start_date) & (df.index <= end_date)]
-    
-    dividend_yield = {}
-    
-    for t in tkrs:
-        try:
-            dividend_yield = df[t]['Dividends'][time_period] / df[t]['Close'][time_period]
-            dividend_yield[t] = dividend_yield.mean()
-        except:
-            dividend_yield[t] = 0
+        stock = yf.Ticker(ticker)
+        dividends = stock.dividends
 
-    return dividend_yield
+        if not dividends.empty:
+            dividends_before_date = dividends[dividends.index < date]
+
+            if not dividends_before_date.empty:
+                most_recent_yield = dividends_before_date.iloc[-1]
+                dividend_yields[ticker] = most_recent_yield
+
+            else:
+                dividend_yields[ticker] = 0
+
+        else:
+            dividend_yields[ticker] = 0
+
+    return dividend_yields
 
 def risk_free_rate(df, start_date, end_date=None):
     """
