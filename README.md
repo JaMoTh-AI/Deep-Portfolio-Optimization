@@ -1,4 +1,5 @@
 # Deep Portfolio Optimization
+Jack Jansons (jcj59), Rob Mosher (ram487), Raphael Thesmar (rft38)  
 Check out our app [here](https://deep-portfolio-optimization.streamlit.app/)!
 
 ## Downloading the libraries
