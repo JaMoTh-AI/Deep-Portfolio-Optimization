@@ -1,4 +1,5 @@
 # Deep Portfolio Optimization
+Jack Jansons (jcj59), Rob Mosher (ram487), Raphael Thesmar (rft38)  
 Check out our app [here](https://deep-portfolio-optimization.streamlit.app/)!
 
 ## Downloading the libraries
@@ -26,3 +27,10 @@ or just run `pip install requirements.txt` after pulling the repo. If your goal 
 If you want to train the LSTM model, open the `model_training.ipynb` and read through the notebook and run the cells. This notebook isn't as interactive as the next one, so in order to train different models make sure you understand the code!
 
 If your goal is to visualize our LSTMs predictions or our training statistics, open the `plotter.ipynb` jupyter notebook. This notebook is much simpler to use than the previous one. Change the `ticker` variable in cell 5 to any other stock ticker such as `META` or `GOOGL` to see that stock's training and validation loss throughout the epochs. In order to make predictions using our LSTMs, verify that the inputs you are giving in cell 9 and 10 are valid. In cell 10, the `stock` can be any stock ticker in `all_stocks`. Make sure that the inputs for `n_lags`, `forecast_horizon`, `model_path`, `data_timeinterval`(cell 10) and `interval`(cell 9) are compatible. If you are wondering which combination are combatible, take a look at the code for `lstm_predict.py` or simply run the combination present in the notebook.
+
+### Optimization Interface
+If you want to run a local copy of the optimization user interface, navigate to the main directory and run the command 
+```
+streamlit run code/optimize_interface.py
+```
+in the terminal. The application should automatically open in your browser assuming you have successfully imported all of the necessary dependencies.
