@@ -19,28 +19,6 @@ def sectors(tkrs):
     
     return output
 
-
-def prices(tkrs, df, start_date, end_date=None):
-    """
-    Given a list of tickers, return a dictionary matching the tickers to their current price. 
-    
-    Inputs:
-    tkrs: List of tickers
-    df: DataFrame of stock data
-
-    Outputs:
-    prices: Dictionary of tickers to their current price
-    """
-
-    if end_date is None:
-        end_date = df.index[-1]
-    
-    prices = {}
-    for t in tkrs:
-        prices[t] = df[t]['Close'][end_date]
-
-    return prices
-
 def dividend_yield(tkrs, df, start_date, end_date=None):
     """
     Given a list of tickers, return a dictionary matching the tickers 

@@ -117,7 +117,7 @@ def predict(timestep, start_date):
                       stock data
 
     Returns:
-    dict: Dictionary containing predictions and variances for each stock.
+    dict: Dictionary containing final price, predictions and variances for each stock.
     """
     # Hyperparams we used to train the model
     num_layers, input_size, hidden_size = 4, 17, 100
@@ -222,6 +222,7 @@ def predict(timestep, start_date):
             pred_price = ticker_stats['pred']*std_devs[ticker]['Close']+means[ticker]['Close']
             
             ticker_stats['pred'] = pred_price/init_price
+            ticker_stats['prices'] = init_price
             output[ticker] = ticker_stats
         except Exception as e:
             print(f"Failed to predict {ticker}")
