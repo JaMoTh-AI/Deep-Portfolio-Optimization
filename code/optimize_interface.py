@@ -139,7 +139,7 @@ if 'tickers' not in st.session_state:
 
 
 # Page title
-st.title("Portfolio Optimization")
+st.title("Deep Portfolio Optimization")
 st.markdown("""
 **Portfolio optimization with a deep learning backbone**  
 Jack Jansons (jcj59), Rob Mosher (ram487), Raphael Thesmar (rft38)  
