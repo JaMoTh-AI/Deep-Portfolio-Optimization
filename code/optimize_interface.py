@@ -117,8 +117,8 @@ def get_fake_stock_data():
         'sector': 'Communication Services',
         'dividend_yield': 0.0294
     }
-}
-return stock_data
+    }
+    return stock_data
 
 
 # Initialize session states
