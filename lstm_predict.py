@@ -60,7 +60,10 @@ def find_closest_date_index(target_date, df):
     closest_index: The index in the DataFrame that's closest to the given date.
     """
     # Convert the date string to a datetime object
-    target_date = target_date.tz_convert('America/New_York')
+    if target_date.tzinfo is None:
+        target_date = target_date.tz_localize('America/New_York')
+    else:
+        target_date = target_date.tz_convert('America/New_York')
 
     # Calculate the absolute difference between the target date and each index
     time_diffs = (df.index - target_date).map(abs)
