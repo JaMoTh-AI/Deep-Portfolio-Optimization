@@ -1,7 +1,7 @@
 # Deep Portfolio Optimization
 Check out our app [here](https://deep-portfolio-optimization.streamlit.app/)!
 
-### Running the Code
+## Downloading the libraries
 First, you need to import the following libraries:
 ```
 yfinance
@@ -17,4 +17,6 @@ gurobipy
 torchvision
 matplotlib
 ```
-or just do pip install requirements.txt after pulling the repo.
+or just run `pip install requirements.txt` after pulling the repo.
+
+## Running the code
