@@ -7,6 +7,6 @@ pandas
 tqdm
 streamlit
 cvxpy
-gurobi
+gurobipy
 torchvision
 matplotlib
