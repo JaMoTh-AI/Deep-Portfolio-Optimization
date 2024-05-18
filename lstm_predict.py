@@ -10,6 +10,7 @@ import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from calc_helpers import sectors, dividend_yield
+import math
 
 
 """
@@ -111,7 +112,7 @@ def evaluate(ticker, dataloader, dataset, model_dir, start_date, device, num_lay
 
     return {"var":ticker_variance, "pred":ticker_pred} 
 
-def predict(timestep, start_date):
+def predict(timestep, start_date, progress_bar=None):
     """
     Predict stock prices using pre-trained LSTM models.
 
@@ -213,6 +214,7 @@ def predict(timestep, start_date):
     output = {}
 
     # Iterate through all tickers and obtain predictions as well as variance
+    i = 0
     for ticker, df in tqdm(full_stock_data.items(), desc="Predicting"):
         try:
             df = (df-means[ticker])/std_devs[ticker] # Normalize
@@ -230,15 +232,21 @@ def predict(timestep, start_date):
             init_price = df.loc[stock_start_date]['Close']*std_devs[ticker]['Close']+means[ticker]['Close']
             pred_price = ticker_stats['pred']*std_devs[ticker]['Close']+means[ticker]['Close']
             
-            ticker_stats['pred'] = pred_price/init_price
-            ticker_stats['prices'] = init_price
+            ticker_stats['expected_returns'] = (pred_price - init_price)/init_price
+            ticker_stats['risk'] = math.sqrt(ticker_stats['var'])
+            del ticker_stats['var']
+            del ticker_stats['pred']
+            ticker_stats['price'] = init_price
             ticker_stats['sector'] = stock_sectors[ticker]
-            ticker_stats['divident yield'] = stock_dividend_yields[ticker]/init_price
+            ticker_stats['dividend_yield'] = stock_dividend_yields[ticker]/init_price
 
             output[ticker] = ticker_stats
         except Exception as e:
             print(e)
             print(f"Failed to predict {ticker}")
+        i += 1
+        if progress_bar:
+            progress_bar.progress(min(1, (i + 1) / len(full_stock_data)))
 
     # Return all predictions and variances
     return output

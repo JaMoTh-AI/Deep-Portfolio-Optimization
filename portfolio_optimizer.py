@@ -53,11 +53,14 @@ def optimize_portfolio(stock_data, objective_fun, constraint_fun=None, **kwargs)
         expected_returns = np.array([stock_data[ticker]['expected_returns'] for ticker in tickers])
         risks = np.array([stock_data[ticker]['risk'] for ticker in tickers])
         prices = np.array([stock_data[ticker]['price'] for ticker in tickers])
+        dividend_yields = np.array([stock_data[ticker]['price'] * stock_data[ticker]['dividend_yield'] for ticker in stock_data.keys()])
+
         
         budget = kwargs.get('budget')
         total_investment = np.sum(prices * optimized_shares)
         portfolio_return = (expected_returns * prices) @ optimized_shares / total_investment
         portfolio_risk = np.sqrt(np.dot(risks**2, optimized_shares) / total_investment)
+        total_dividend_yield = (dividend_yields @ optimized_shares) / total_investment
     else:
         # If optimization infeasible throw error
         raise Exception(f"Optimization failed with status {problem.status}")
@@ -65,7 +68,7 @@ def optimize_portfolio(stock_data, objective_fun, constraint_fun=None, **kwargs)
     # Keep non-zero tickers
     portfolio = {k: v for k, v in portfolio.items() if v > 0}
 
-    return portfolio, portfolio_return, portfolio_risk, total_investment
+    return portfolio, portfolio_return, portfolio_risk, total_investment, total_dividend_yield
 
 
 
@@ -293,19 +296,22 @@ def sector_allocation_constraint(shares, stock_data, **kwargs):
     Arguments:
     shares (list): Number of shares to buy of each stock ticker in portfolio.
     stock_data (dict): Dictionary with stock tickers as keys and dictionaries as values.
-    sector_limits (dict): Dictionary with sectors as keys and max percentage of budget to invest in that sector.
+    min_sector (dict): Dictionary of minimum sector constraints.
+    max_sector (dict): Dictionary of maximum sector constraints.
     budget (float): Total budget to be invested in the portfolio.
 
     Returns:
     constraint (list): List containing the constraints.
     """
     # Get keyword arguments
-    sector_limits = kwargs.get('sector_limits', {})
+    min_sector = kwargs.get('min_sector', {})
+    max_sector = kwargs.get('max_sector', {})
     budget = kwargs.get('budget')
 
     constraints = []
-    for sector, limit in sector_limits.items():
+    for sector in min_sector.keys():
         sector_shares = np.array([shares[idx] for idx, ticker in enumerate(stock_data.keys()) if stock_data[ticker]['sector'] == sector])
         sector_prices = np.array([stock_data[ticker]['price'] for ticker in stock_data.keys() if stock_data[ticker]['sector'] == sector])
-        constraints.append(sector_shares @ sector_prices <= limit)
+        constraints.append(sector_shares @ sector_prices <= budget*max_sector[sector])
+        constraints.append(sector_shares @ sector_prices >= budget*min_sector[sector])
     return constraints

@@ -1,6 +1,25 @@
 import pandas as pd
 import yfinance as yf
 
+def get_risk_free_rate():
+    """
+    Get the current 3-month Treasury Bill (risk-free rate) from Yahoo Finance.
+
+    Returns:
+    float: Current 3-month T-Bill rate as a percentage.
+    """
+    # Ticker symbol for 3-month T-Bill on Yahoo Finance
+    t_bill_symbol = "^IRX"
+
+    # Download historical data for the 3-month T-Bill
+    t_bill_data = yf.download(t_bill_symbol, period="1d")
+
+    # Get the most recent value of the 3-month T-Bill rate
+    current_rate = t_bill_data['Close'].iloc[-1]
+
+    # Convert to a percentage
+    return current_rate / 100
+
 def sectors(tkrs):
     """
     Given a list of tickers, return a dictionary matching the tickers to the sector that they belong to. 
